@@ -2,6 +2,8 @@
 
 **Build Before Q-Day · Quantum Pass · QoreChain testnet `qorechain-diana` (EVM chain id 9800)**
 
+[![Built on QoreChain](https://build.qorechain.io/badge/qorepass.svg)](https://build.qorechain.io/p/qorepass)
+
 A pass is a small thing that has to be unforgeable: an event badge, a course
 credential, a signed receipt, a door code for one night. Today almost all of
 them are a barcode, a PDF, or a row in a database keyed by an account — and
