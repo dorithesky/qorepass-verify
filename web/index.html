@@ -175,7 +175,7 @@
         <ol class="steps">
           <li>The pass was issued by an account whose ML-DSA-87 key the chain knows, over a message bound to this contract and chain id.</li>
           <li>The presenter holds the ML-DSA-87 key whose hash the pass was issued to — a copied pass id or a screenshot is not enough.</li>
-          <li>Every issue, check-in and revoke is a transaction: <b>indicative</b> only if the signature verifies in the <code>pqcVerify</code> precompile.</li>
+          <li>Every issue, check-in and revoke is a transaction that succeeds only if the ML-DSA-87 signature verifies in the <code>pqcVerify</code> precompile.</li>
         </ol>
       </section>
     </aside>

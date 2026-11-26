@@ -89,6 +89,15 @@ def text_block(d, xy, lines, f, fill, spacing=8):
     return y
 
 
+def _watermark(d, w, h):
+    """A faint mark keeps the lower half from reading as dead space."""
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(layer)
+    ld.text((w - 320, h - 300), "Q", font=font(300, bold=True), fill=(255, 255, 255, 12))
+    ld.ellipse([(w - 330, h - 330), (w - 30, h - 30)], outline=(110, 231, 183, 16), width=2)
+    d._image.paste(Image.alpha_composite(d._image.convert("RGBA"), layer).convert("RGB"), (0, 0))
+
+
 def wrap(text: str, f: ImageFont.FreeTypeFont, width: int) -> list[str]:
     words, lines, current = text.split(), [], ""
     for word in words:
@@ -193,6 +202,7 @@ class Slide(Scene):
         self.big = big
 
     def draw(self, d, w, h, t):
+        _watermark(d, w, h)
         d.text((72, 60), self.kicker.upper(), font=font(20, bold=True), fill=self.accent)
         d.text((72, 92), self.title, font=font(42, bold=True), fill=TEXT)
         d.line([(72, 160), (w - 72, 160)], fill=LINE, width=2)
@@ -215,7 +225,7 @@ class Slide(Scene):
 
 
 class Shot(Scene):
-    """A screenshot from demo/shots/ scaled into a frame."""
+    """A screenshot from demo/shots/, scaled into the frame."""
 
     def __init__(self, seconds, kicker, title, image: Path):
         super().__init__(seconds, kicker, title)
@@ -224,28 +234,19 @@ class Shot(Scene):
     def draw(self, d, w, h, t):
         d.text((72, 60), self.kicker.upper(), font=font(20, bold=True), fill=ACCENT_2)
         d.text((72, 92), self.title, font=font(38, bold=True), fill=TEXT)
-        img = Image.open(self.image).convert("RGB")
-        box_w, box_h = w - 144, h - 230
-        scale = min(box_w / img.width, box_h / img.height)
-        img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
-        self._panel = img
+        shot = Image.open(self.image).convert("RGB")
+        box_w, box_h = w - 120, h - 230
+        scale = min(box_w / shot.width, box_h / shot.height)
+        shot = shot.resize((int(shot.width * scale), int(shot.height * scale)), Image.LANCZOS)
+        d._image.paste(shot, ((w - shot.width) // 2, 170))
+        d.rectangle([(w - shot.width) // 2 - 1, 169, (w + shot.width) // 2, 171 + shot.height], outline=LINE)
 
 
 def draw_frame(scene: Scene, w: int, h: int, t: float, index: int, total: int) -> Image.Image:
     img = gradient(w, h)
     d = ImageDraw.Draw(img)
-    if isinstance(scene, Shot):
-        bg = Image.new("RGB", (w, h), BG)
-        d2 = ImageDraw.Draw(bg)
-        d2.text((72, 60), scene.kicker.upper(), font=font(20, bold=True), fill=ACCENT_2)
-        d2.text((72, 92), scene.title, font=font(38, bold=True), fill=TEXT)
-        shot = scene._panel
-        bg.paste(shot, ((w - shot.width) // 2, 180))
-        d2.rectangle([(w - shot.width) // 2 - 1, 179, (w + shot.width) // 2, 180 + shot.height], outline=LINE)
-        img = bg
-        d = ImageDraw.Draw(img)
-    else:
-        scene.draw(d, w, h, t)
+    d._image = img
+    scene.draw(d, w, h, t)
     # progress + footer
     d.line([(0, h - 4), (int(w * (index + 1) / total), h - 4)], fill=ACCENT, width=4)
     d.text((w - 200, h - 40), "QorePass · Apache-2.0", font=font(14), fill=MUTED)
@@ -259,6 +260,8 @@ def make_video() -> Path:
     journal = run["journal"]
     shots_dir = ROOT / "demo" / "shots"
     shots = sorted(shots_dir.glob("*.png")) if shots_dir.exists() else []
+    # prefer the composite of the live page when present
+    shots.sort(key=lambda p: (0 if "composite" in p.name else 1, p.name))
 
     refused = [e for e in journal if e.get("ok") is False]
     scenarios = [
