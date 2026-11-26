@@ -216,7 +216,8 @@ async function rpc(method, params) {
   return body.result;
 }
 async function call(data) {
-  return rpc("eth_call", [{ to: REGISTRY, data, value: "0x0" }, "latest"]);
+  const blob = data.startsWith("0x") ? data : "0x" + data;
+  return rpc("eth_call", [{ to: REGISTRY, data: blob, value: "0x0" }, "latest"]);
 }
 const pad32 = (hex) => hex.replace(/^0x/, "").padStart(64, "0");
 const words = (hex) => {
