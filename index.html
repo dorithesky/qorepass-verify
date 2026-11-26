@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta http-equiv="refresh" content="0; url=web/index.html" />
   <title>QorePass — verifier</title>
+  <script>
+    // keep a shared ?pass=… link working across the redirect to the app
+    location.replace("web/index.html" + location.search + location.hash);
+  </script>
 </head>
 <body>
   <p>Opening the QorePass verifier… <a href="web/index.html">continue</a></p>
