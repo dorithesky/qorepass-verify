@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QorePass — post-quantum passes on QoreChain</title>
+<meta name="description" content="Verify a QoreChain QorePass: an event pass, credential or receipt issued and checked in with ML-DSA-87 signatures on chain." />
+<style>
+  :root {
+    --bg: #070b14;
+    --panel: #0d1424;
+    --panel-2: #111a2e;
+    --line: #1e2a44;
+    --text: #e7edf9;
+    --muted: #8695b3;
+    --accent: #6ee7b7;
+    --accent-2: #7dd3fc;
+    --danger: #fb7185;
+    --warn: #fbbf24;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background:
+      radial-gradient(1100px 500px at 12% -10%, #12304a 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #1b1440 0%, transparent 55%),
+      var(--bg);
+    color: var(--text); font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.55; min-height: 100vh;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 34px 22px 70px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: conic-gradient(from 200deg, var(--accent), var(--accent-2), #a78bfa, var(--accent));
+    display: grid; place-items: center; color: #06121a; font-weight: 800; font-size: 18px;
+  }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.2px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+  .pill { border: 1px solid var(--line); background: var(--panel); padding: 5px 11px; border-radius: 999px; font-size: 12px; color: var(--muted); }
+  .pill b { color: var(--text); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; margin-top: 26px; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--line); border-radius: 18px; padding: 20px 20px 18px;
+    box-shadow: 0 22px 60px -40px #000;
+  }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 0 0 14px; }
+  .row { display: flex; gap: 10px; }
+  input[type="text"] {
+    flex: 1; background: #060a12; border: 1px solid var(--line); color: var(--text);
+    padding: 12px 14px; border-radius: 12px; font-family: var(--mono); font-size: 12.5px;
+  }
+  input[type="text"]:focus { outline: 2px solid #1f4b6b; border-color: #2d6d95; }
+  button {
+    background: var(--accent); color: #04140d; border: 0; padding: 12px 18px; border-radius: 12px;
+    font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  button:hover { filter: brightness(1.06); }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 600; }
+  .examples { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--line); background: #0a1120; color: var(--text); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; cursor: pointer;
+  }
+  .chip:hover { border-color: #2d6d95; }
+  .pass {
+    margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: none;
+  }
+  .pass.show { display: block; }
+  .pass-head { padding: 18px 18px 14px; background: linear-gradient(135deg, #10233a 0%, #0d1a2b 60%, #131033 100%); }
+  .pass-head .ev { font-size: 12px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  .pass-head .who { font-size: 26px; font-weight: 750; letter-spacing: -0.4px; margin-top: 4px; }
+  .status {
+    display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: block; }
+  .s-valid { background: #06301f; color: var(--accent); border: 1px solid #14532d; }
+  .s-in { background: #05283a; color: var(--accent-2); border: 1px solid #164e63; }
+  .s-rev { background: #340d15; color: var(--danger); border: 1px solid #7f1d1d; }
+  .s-exp { background: #2c2205; color: var(--warn); border: 1px solid #78350f; }
+  .s-unk { background: #1a1f2b; color: var(--muted); border: 1px solid var(--line); }
+  dl { margin: 0; padding: 16px 18px; display: grid; grid-template-columns: 130px 1fr; gap: 9px 14px; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  .checks { border-top: 1px solid var(--line); padding: 14px 18px 18px; display: grid; gap: 8px; font-size: 13px; }
+  .check { display: flex; gap: 9px; align-items: flex-start; }
+  .check span.tick { color: var(--accent); font-family: var(--mono); }
+  .check span.no { color: var(--danger); font-family: var(--mono); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 14px; }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 9px 0; border-bottom: 1px dashed #1a2438; font-size: 13px; }
+  .kv:last-child { border-bottom: 0; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-family: var(--mono); font-size: 12px; text-align: right; word-break: break-all; }
+  .steps { margin: 10px 0 0; padding: 0; list-style: none; counter-reset: s; }
+  .steps li { position: relative; padding: 8px 0 8px 34px; font-size: 13px; color: #cbd5e9; counter-increment: s; border-bottom: 1px dashed #1a2438; }
+  .steps li:last-child { border-bottom: 0; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 8px; width: 22px; height: 22px; border-radius: 7px;
+    background: #10243a; color: var(--accent-2); font-size: 11px; font-weight: 700; display: grid; place-items: center;
+    font-family: var(--mono);
+  }
+  code { font-family: var(--mono); font-size: 12px; background: #060a12; border: 1px solid var(--line); padding: 2px 6px; border-radius: 6px; }
+  footer { margin-top: 34px; color: var(--muted); font-size: 12px; display: flex; gap: 18px; flex-wrap: wrap; }
+  .err { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; }
+  .err.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">Q</div>
+      <div>
+        <h1>QorePass</h1>
+        <p class="sub">Passes that belong to a post-quantum key, not to a wallet</p>
+      </div>
+    </div>
+    <div class="pill">network <b>qorechain-diana</b> · EVM <b>9800</b></div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Verify a pass</h2>
+      <div class="row">
+        <input id="passId" type="text" spellcheck="false" placeholder="0x… pass id (64 hex characters)" />
+        <button id="go">Verify</button>
+      </div>
+      <div class="examples">
+        <button class="chip" data-pass="0x1e5e5573eea8932933092fc636f163b54075026ab0bc470ec42dad24055e53ca">ada-1 · checked in</button>
+        <button class="chip" data-pass="0x81f49c48cfe419ce8fe60982c059d3e02817ef44109a364eefcfdb70c7081c27">boram-1 · revoked</button>
+        <button class="chip" data-pass="0xcc1fb73a375a757e4c8b331ef5dc60cbe4cad43e94eb00c8aa53d0de49875035">chen-1 · checked in</button>
+      </div>
+      <div class="err" id="err"></div>
+
+      <article class="pass" id="passCard">
+        <div class="pass-head">
+          <div class="ev" id="ev">—</div>
+          <div class="who" id="who">—</div>
+          <div class="status s-unk" id="st"><i></i><span>reading chain…</span></div>
+        </div>
+        <dl>
+          <dt>pass id</dt><dd id="pid">—</dd>
+          <dt>issuer</dt><dd id="issuer">—</dd>
+          <dt>holder key</dt><dd id="keyhash">—</dd>
+          <dt>valid until</dt><dd id="valid">—</dd>
+          <dt>checked in</dt><dd id="checked">—</dd>
+          <dt>issued</dt><dd id="issued">—</dd>
+          <dt>block</dt><dd id="block">—</dd>
+        </dl>
+        <div class="checks" id="checks"></div>
+      </article>
+      <p class="hint">Everything above is read from the chain with <code>eth_call</code> — no account, no wallet, no trust in this page. The issuer's ML-DSA-87 signature over the pass is verified offline by <code>python -m qorepass.cli verify</code> against the key the chain holds for the issuer.</p>
+    </section>
+
+    <aside>
+      <section class="card">
+        <h2>Registry</h2>
+        <div class="kv"><span class="k">contract</span><span class="v" id="reg">—</span></div>
+        <div class="kv"><span class="k">passes issued</span><span class="v" id="tIssued">—</span></div>
+        <div class="kv"><span class="k">checked in</span><span class="v" id="tIn">—</span></div>
+        <div class="kv"><span class="k">revoked</span><span class="v" id="tRev">—</span></div>
+        <div class="kv"><span class="k">issuer key hash</span><span class="v" id="ik">—</span></div>
+        <div class="kv"><span class="k">issuer passes</span><span class="v" id="ip">—</span></div>
+        <div class="kv"><span class="k">issuer nonce</span><span class="v" id="in">—</span></div>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+        <h2>What a check-in proves</h2>
+        <ol class="steps">
+          <li>The pass was issued by an account whose ML-DSA-87 key the chain knows, over a message bound to this contract and chain id.</li>
+          <li>The presenter holds the ML-DSA-87 key whose hash the pass was issued to — a copied pass id or a screenshot is not enough.</li>
+          <li>Every issue, check-in and revoke is a transaction: <b>indicative</b> only if the signature verifies in the <code>pqcVerify</code> precompile.</li>
+        </ol>
+      </section>
+    </aside>
+  </div>
+
+  <footer>
+    <span>QorePass · Apache-2.0</span>
+    <a id="repoLink" href="https://github.com/dorithesky/qorepass-verify">github.com/dorithesky/qorepass-verify</a>
+    <a id="explorer" href="#">explorer</a>
+  </footer>
+</div>
+
+<script>
+const RPC = "https://evm-testnet.qore.host";
+const REGISTRY = "0x312845b8256cafe2ecc8be7addf54f83a836a88b";
+const ISSUER = "0xf76114540D7D6475B32cc83A9138C307D1a47d54";
+const SEL = {
+  passInfo: "9d11738a",
+  passState: "4cfd517d",
+  issuerInfo: "90c2b17d",
+  issuerNonce: "20695c41",
+  totalIssued: "f5be3193",
+  totalCheckedIn: "e838d27c",
+  totalRevoked: "e62ce7ac",
+};
+const STATES = { 0: ["UNKNOWN", "s-unk"], 1: ["VALID", "s-valid"], 2: ["CHECKED IN", "s-in"], 3: ["EXPIRED", "s-exp"], 4: ["REVOKED", "s-rev"] };
+const ZERO = "0x0000000000000000000000000000000000000000";
+
+let rpcId = 0;
+async function rpc(method, params) {
+  const res = await fetch(RPC, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
+  });
+  const body = await res.json();
+  if (body.error) throw new Error(body.error.message || "rpc error");
+  return body.result;
+}
+async function call(data) {
+  return rpc("eth_call", [{ to: REGISTRY, data, value: "0x0" }, "latest"]);
+}
+const pad32 = (hex) => hex.replace(/^0x/, "").padStart(64, "0");
+const words = (hex) => {
+  const body = hex.replace(/^0x/, "");
+  const out = [];
+  for (let i = 0; i < body.length; i += 64) out.push(body.slice(i, i + 64));
+  return out;
+};
+const num = (w) => BigInt("0x" + w);
+const addr = (w) => "0x" + w.slice(24);
+const fmt = (ts) => (ts === 0n ? "—" : new Date(Number(ts) * 1000).toISOString().replace(".000Z", " UTC"));
+const short = (a) => (a && a.length > 18 ? a.slice(0, 10) + "…" + a.slice(-6) : a);
+
+function setStatus(state) {
+  const [label, cls] = STATES[state] ?? STATES[0];
+  const el = document.getElementById("st");
+  el.className = "status " + cls;
+  el.innerHTML = "<i></i><span>" + label + "</span>";
+}
+
+function renderChecks({ state, keyHash, issuer, issuerKnown }) {
+  const rows = [
+    [state !== 0, "The registry knows this pass id."],
+    [issuerKnown, "The issuing account has an ML-DSA-87 key registered on chain."],
+    [state !== 4, "The pass has not been revoked by its issuer."],
+    [state !== 3, "The pass is inside its validity window."],
+    [state !== 2, "The pass has not already been checked in."],
+    [keyHash !== ZERO, "The pass is bound to a holder ML-DSA-87 key (not to a wallet)."],
+  ];
+  document.getElementById("checks").innerHTML = rows
+    .map(([ok, text]) => `<div class="check"><span class="${ok ? "tick" : "no"}">${ok ? "PASS" : "FAIL"}</span><span>${text}</span></div>`)
+    .join("");
+}
+
+async function verify(passId) {
+  passId = passId.trim().toLowerCase();
+  const err = document.getElementById("err");
+  err.classList.remove("show");
+  if (!/^0x[0-9a-f]{64}$/.test(passId)) {
+    err.textContent = "That is not a pass id: 0x followed by 64 hex characters.";
+    err.classList.add("show");
+    return;
+  }
+  const card = document.getElementById("passCard");
+  card.classList.add("show");
+  document.getElementById("pid").textContent = passId;
+  try {
+    const stateRaw = await call(SEL.passState + pad32(passId));
+    const state = Number(num(words(stateRaw)[0]));
+    const info = words(await call(SEL.passInfo + pad32(passId)));
+    const [issuer, holder, eventId, metaHash, keyHash, validUntil, issuedAt, checkedInAt] = info;
+    const issuerKnown = (await call(SEL.issuerInfo + pad32(issuer))).replace(/^0x/, "").slice(0, 64) !== "0".repeat(64);
+
+    setStatus(state);
+    document.getElementById("ev").textContent = "event " + short("0x" + eventId);
+    document.getElementById("who").textContent = "Pass " + passId.slice(0, 10) + "…";
+    document.getElementById("issuer").textContent = addr(issuer);
+    document.getElementById("keyhash").textContent = "0x" + keyHash;
+    document.getElementById("valid").textContent = fmt(num(validUntil));
+    document.getElementById("checked").textContent = fmt(num(checkedInAt));
+    document.getElementById("issued").textContent = fmt(num(issuedAt));
+    document.getElementById("block").textContent = short("0x" + metaHash) + " (metadata hash)";
+    renderChecks({ state, keyHash: "0x" + keyHash, issuer: addr(issuer), issuerKnown });
+
+    // deep link, so a verifier can share what they saw
+    const url = new URL(window.location.href);
+    url.searchParams.set("pass", passId);
+    history.replaceState(null, "", url);
+  } catch (e) {
+    err.textContent = "chain read failed: " + e.message;
+    err.classList.add("show");
+    setStatus(0);
+    document.getElementById("st").querySelector("span").textContent = "CHAIN UNREACHABLE";
+  }
+}
+
+async function loadRegistry() {
+  document.getElementById("reg").textContent = REGISTRY;
+  document.getElementById("explorer").href = "https://explore.qore.network/address/" + REGISTRY + "?network=testnet";
+  try {
+    const [ti, tc, tr] = await Promise.all([
+      call(SEL.totalIssued),
+      call(SEL.totalCheckedIn),
+      call(SEL.totalRevoked),
+    ]);
+    document.getElementById("tIssued").textContent = num(words(ti)[0]).toString();
+    document.getElementById("tIn").textContent = num(words(tc)[0]).toString();
+    document.getElementById("tRev").textContent = num(words(tr)[0]).toString();
+    const iss = words(await call(SEL.issuerInfo + pad32(ISSUER)));
+    document.getElementById("ik").textContent = short("0x" + iss[0]);
+    document.getElementById("ip").textContent = num(iss[3]).toString();
+    const nonce = num(words(await call(SEL.issuerNonce + pad32(ISSUER)))[0]);
+    document.getElementById("in").textContent = nonce.toString();
+  } catch (e) {
+    document.getElementById("tIssued").textContent = "unavailable";
+  }
+}
+
+document.getElementById("go").addEventListener("click", () => verify(document.getElementById("passId").value));
+document.getElementById("passId").addEventListener("keydown", (e) => { if (e.key === "Enter") verify(e.currentTarget.value); });
+document.querySelectorAll(".chip").forEach((chip) =>
+  chip.addEventListener("click", () => {
+    document.getElementById("passId").value = chip.dataset.pass;
+    verify(chip.dataset.pass);
+  })
+);
+const fromUrl = new URL(window.location.href).searchParams.get("pass");
+if (fromUrl) { document.getElementById("passId").value = fromUrl; verify(fromUrl); }
+loadRegistry();
+</script>
+</body>
+</html>

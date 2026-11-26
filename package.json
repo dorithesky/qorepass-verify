@@ -1,0 +1,13 @@
+{
+  "name": "qorepass-verify",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QorePass — post-quantum pass registry and verifier on QoreChain testnet. The web app is dependency-free; this file only carries the static-preview scripts.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080"
+  },
+  "keywords": ["qorechain", "post-quantum", "ML-DSA-87", "passes", "credentials"],
+  "repository": { "type": "git", "url": "https://github.com/dorithesky/qorepass-verify" }
+}

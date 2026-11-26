@@ -1,0 +1,18 @@
+# keys are throwaway test keys, but they are still keys
+keys/
+*.key
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/lib/
+
+# rendered working files
+tmp/
+*.log
