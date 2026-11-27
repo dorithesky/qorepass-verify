@@ -1,0 +1,23 @@
+{
+  "chain_id": "qorechain-diana",
+  "rest": "https://api-testnet.qore.host",
+  "rpc": "https://rpc-testnet.qore.host",
+  "evm_rpc": "https://evm-testnet.qore.host",
+  "evm_chain_id": 9800,
+  "registry": "0x312845b8256cafe2ecc8be7addf54f83a836a88b",
+  "deploy_tx": "0x834f722842fcaa41363de7b233b30c4e772f8ffc4752cf3e2170eb36f466f231",
+  "deploy_block": 10810247,
+  "admin": {
+    "native": "qor1m6x0am3atrl4lwyfvgnjn7m3gr20fnvqlktd3n",
+    "evm": "0xdE8cfeeE3D58FF5FB889622729fb7140D4F4CD80"
+  },
+  "issuer": {
+    "native": "qor17as3g4qd04j8tveveqafzwxrqlg6gl257cy3xx",
+    "evm": "0xf76114540D7D6475B32cc83A9138C307D1a47d54"
+  },
+  "funder": {
+    "native": "qor1qj002t0yrrwud08geqww0r5f56tgu09rqjxqcd",
+    "evm": "0x049Ef52DE418DDC6Bce8c81ce78E89A6968e3Ca3"
+  },
+  "explorer": "https://explore.qore.network"
+}

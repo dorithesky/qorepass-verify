@@ -120,6 +120,61 @@ def write(ctx) -> Path:  # noqa: ANN001 - Context from cli, kept loose to avoid 
             )
     add("")
 
+    features_path = ROOT / "demo" / "features.json"
+    features = json.loads(features_path.read_text()) if features_path.exists() else {}
+    if features:
+        add("## The extra rails\n")
+        add("Added after the first submission; each one is a transaction, not a sentence.\n")
+        add("| Rail | What it establishes | Evidence |")
+        add("| --- | --- | --- |")
+        kem = features.get("kem", {})
+        if kem:
+            add(
+                f"| **QoreSeal** (ML-KEM key) | the issuer's ML-KEM-1024 key is on chain, so the archive can be sealed to it | "
+                f"[`{kem.get('tx', '')[:20]}…`]({EXPLORER}/tx/{kem.get('tx', '')}) · {kem.get('key_len')}B · {kem.get('algorithm')} |"
+            )
+        seal = features.get("seal", {})
+        if seal:
+            add(
+                f"| **QoreSeal** (issuance archive) | {seal.get('entries')} pass documents sealed into one {seal.get('envelope_len')}-byte envelope; "
+                f"only its digest is on chain | [`{seal.get('anchor_tx', '')[:20]}…`]({EXPLORER}/tx/{seal.get('anchor_tx', '')}) · "
+                f"`{seal.get('memo_commitment', '')}` |"
+            )
+        receipts = features.get("receipts", {})
+        if receipts:
+            add(
+                f"| **QoreSign / SIWQ** (check-in receipts) | {receipts.get('count')} admission receipts, each a SIWQ message signed by the venue's hybrid key "
+                f"and verified against its on-chain ML-DSA-87 key | [`{receipts.get('anchor_tx', '')[:20]}…`]({EXPLORER}/tx/{receipts.get('anchor_tx', '')}) · "
+                f"`{receipts.get('memo', '')}` |"
+            )
+        kiosk = features.get("kiosk", {})
+        if kiosk:
+            add(
+                f"| **Smart account** (kiosk key) | an Ed25519 key linked to the venue account with `evm` allowed on exactly one call: "
+                f"`checkIn` on the registry | [`{kiosk.get('tx', '')[:20]}…`]({EXPLORER}/tx/{kiosk.get('tx', '')}) |"
+            )
+        checkin = features.get("kiosk_checkin", {})
+        if checkin:
+            add(
+                f"| **Smart account** (check-in through it) | `dara-1` admitted by the kiosk key through `MsgExecuteEVM`; a relayer paid the fee | "
+                f"[`{checkin.get('tx', '')[:20]}…`]({EXPLORER}/tx/{checkin.get('tx', '')}) · auth nonce {checkin.get('auth_nonce')} |"
+            )
+        refusal = features.get("kiosk_refusal", {})
+        if refusal:
+            add(
+                f"| **Smart account** (the limit) | the same key tried to mint a pass and the chain refused it: "
+                f"*authenticator not permitted for this action* | [`{refusal.get('tx', '')[:20]}…`]({EXPLORER}/tx/{refusal.get('tx', '')}) |"
+            )
+        add(
+            "| **QoreChain MCP** | the registry's counters read back through `qorechain-mcp`'s `read_contract` equal `eth_call` | "
+            "`python -m qorepass.mcpread state` |"
+        )
+        add(
+            "| **QoreScan** | CycloneDX CBOM of the contract and the chain, plus DORA and NIS2 mappings | "
+            "[`docs/cbom.json`](cbom.json) · [`docs/DORA-REPORT.md`](DORA-REPORT.md) · [`docs/NIS2-REPORT.md`](NIS2-REPORT.md) |"
+        )
+        add("")
+
     add("## How to check it yourself\n")
     add("```bash")
     add(f"# the registry's totals (passState is 0 unknown, 1 valid, 2 checked in, 3 expired, 4 revoked)")

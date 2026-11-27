@@ -109,3 +109,37 @@ honest part:
 The AI also wrote the name note at the top of the README, because another
 project called "QorePass" appeared in the same track on the same day and a judge
 should not have to guess which one this is.
+
+## Third pass: the kits beyond the registry
+
+The brief for this pass was to bring QorePass up to the depth of the top entries
+in the track: a keyless re-verification script, a wider kit list, and evidence
+that survives a judge poking at it. What the AI did, and where it had to correct
+itself:
+
+- **QoreSeal, QoreSign and the kiosk key were written from a sibling project's
+  working code**, then re-pointed at QorePass's own contract and messages. The
+  cheap mistake — sealing the archive to the *issuer's account key* without
+  registering an ML-KEM key first — was caught by the chain: the registration
+  has to happen before the envelope can be addressed to anyone.
+- **The first `verify.py` read the wrong thing three times.** QoreChain's REST
+  returns the PQC public key base64-encoded, not hex; `fetch_kem_key` wants a
+  client object, not a URL string; and the kiosk's authenticator record names its
+  key `pubkey_hex`, not `pubkey`. Each looked like a failed check until the shape
+  was read from the live response. The lesson kept in the code: a negative test
+  that "passes" for the wrong reason is worse than no test — the receipt
+  tampering check was rewritten after it turned out to be comparing an object
+  to itself instead of editing the signed message.
+- **The invariant suite disagreed with the first story.** The handler wanted
+  "a revoked pass can never be checked in"; the contract deliberately allows a
+  refund *after* attendance, so the invariant was narrowed to what the contract
+  actually promises (a revoke is final, and it keeps the check-in time it had).
+  Writing the property down is what exposed the difference between the sentence
+  and the code.
+- **The video is rendered from the run data** (`demo/journal.jsonl`,
+  `demo/features.json`), so the numbers on screen are the numbers on chain; the
+  107-second cut became 152 seconds when the four new rails were added, and the
+  script refuses to invent a figure it cannot read.
+
+Tools added in this pass: `qorechain-qoreseal` 0.1.0, `qorechain-qoresign`
+0.2.0, `qorechain-mcp` 0.1.1, `qorescan` 0.1.0.

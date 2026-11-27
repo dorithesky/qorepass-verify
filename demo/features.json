@@ -1,0 +1,81 @@
+{
+  "kem": {
+    "address": "qor17as3g4qd04j8tveveqafzwxrqlg6gl257cy3xx",
+    "algorithm": "mlkem1024",
+    "already": false,
+    "chain_matches_derivation": true,
+    "checked_at": 1795787019,
+    "key_len": 1568,
+    "registered_height": 10852153,
+    "tx": "5E0F76BFB5F8149F7553C7F8B85E8F1E1A5C66B335118AA72941C3D4EC44A6AD"
+  },
+  "kiosk": {
+    "allowed_evm_calls": [
+      "0x312845b8256cafe2ecc8be7addf54f83a836a88b/0x1ef04ae6"
+    ],
+    "chain_sees": [
+      {
+        "label": "qorepass-kiosk",
+        "permissions": [
+          "evm"
+        ],
+        "revoked": false
+      }
+    ],
+    "label": "qorepass-kiosk",
+    "linked_at": 1795787073,
+    "permissions": [
+      "evm"
+    ],
+    "pubkey": "f6e7a054575bd9438d2c8fdcfb893a72f426852a7ccf0228cb08a1b769371499",
+    "tx": "916AA28DFE3A2EEEB1F17D35F0819105908603B378268DB6CD9FC0008A9A9E4C"
+  },
+  "kiosk_checkin": {
+    "auth_digest": "0x9e4b66e6a21135fd02057fc5d5baf998bbdf7b5abf4a4fc15019bf598c2f2d7a",
+    "auth_nonce": 0,
+    "checked_in_at": 1795787084,
+    "pass": "dara-1",
+    "pass_id": "0xb6a98c04b0bc7b2f8a7c8e389993fd67aa42450b83fe3bc72e71f8b3eddc7a97",
+    "state": "CHECKED_IN",
+    "tx": "E468443E6D232967B130DF76DBAA054133103ACA96E82FA5F48344961A5EC35F"
+  },
+  "kiosk_refusal": {
+    "attempted": "issuePass(bytes32,address,bytes32,bytes32,bytes32,uint64,bytes)",
+    "code": 0,
+    "execution": {
+      "ret": "0x",
+      "success": false,
+      "vm_error": "a linked key with a spending rule may call 0x312845b8256caFE2eCC8be7adDF54F83a836A88b with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x312845b8256caFE2eCC8be7adDF54F83a836A88b\" for a token transfer or approval): authenticator not permitted for this action"
+    },
+    "raw_log": "",
+    "refused": true,
+    "tx": "F666181218EB51A3E47CC9AE3D56025425623CF6DCC5BEB398DA95330B5D6AF5"
+  },
+  "receipts": {
+    "anchor_tx": "A278B480CBC5069ECB212FA278C56120EBED2F92C03453ED436BAED1E243A653",
+    "count": 3,
+    "files": [
+      "demo/receipts/ada-1.json",
+      "demo/receipts/chen-1.json",
+      "demo/receipts/dara-1.json"
+    ],
+    "issued_at": 1795787228,
+    "memo": "qorepass:receipts:v1:e8926fd959e82277b15392895e6901f49bed5ed2",
+    "venue": "qor1m6x0am3atrl4lwyfvgnjn7m3gr20fnvqlktd3n"
+  },
+  "seal": {
+    "anchor_tx": "E9A93CDA5593EBEA4B4804148DBEEAAB444229F1070CE54D4772CC8A52C7B953",
+    "anchored_at": 1795787245,
+    "batch_id": "issuance-20261127T134719Z",
+    "entries": 5,
+    "envelope": "demo/sealed/issuance-20261127T134719Z.sealed",
+    "envelope_len": 72602,
+    "envelope_sha256": "9de43ba5e7e012c4f141415ed7327cba8f0e381f55069911218aaa14ee6d3425",
+    "memo_commitment": "qorepass:seal:v1:9de43ba5e7e012c4f141415ed7327cba8f0e381f",
+    "opened_and_matched": true,
+    "plaintext_sha256": "3419c1def64d7176c3da5f73bc8812bcb5f90a401b3712c87a83a64a9e3771a9",
+    "recipient": "qor17as3g4qd04j8tveveqafzwxrqlg6gl257cy3xx",
+    "recipient_evm": "0xf76114540D7D6475B32cc83A9138C307D1a47d54",
+    "sealed_at": 1795787239
+  }
+}

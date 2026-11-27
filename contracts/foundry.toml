@@ -10,3 +10,10 @@ remappings = ["forge-std/=lib/forge-std/src/"]
 
 [fuzz]
 runs = 256
+
+[invariant]
+# 256 sequences × 500 calls each: slow enough to be meaningful, fast enough to
+# run on every push (~13s).
+runs = 256
+depth = 500
+fail_on_revert = false

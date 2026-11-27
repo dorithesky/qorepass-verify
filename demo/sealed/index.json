@@ -1,0 +1,11 @@
+[
+  {
+    "batch_id": "issuance-20261127T134719Z",
+    "envelope": "demo/sealed/issuance-20261127T134719Z.sealed",
+    "envelope_sha256": "9de43ba5e7e012c4f141415ed7327cba8f0e381f55069911218aaa14ee6d3425",
+    "envelope_len": 72602,
+    "plaintext_sha256": "3419c1def64d7176c3da5f73bc8812bcb5f90a401b3712c87a83a64a9e3771a9",
+    "entries": 5,
+    "memo_commitment": "qorepass:seal:v1:9de43ba5e7e012c4f141415ed7327cba8f0e381f"
+  }
+]

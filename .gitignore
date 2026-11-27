@@ -21,3 +21,7 @@ tmp/
 dapp/node_modules/
 dapp/dist/
 dapp/.env.local
+
+# coverage reports from CI / local runs
+contracts/coverage.txt
+contracts/*.lcov

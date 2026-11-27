@@ -49,7 +49,19 @@ def load_run() -> dict:
     dep = json.loads((ROOT / "keys" / "deployment.json").read_text())
     journal = [json.loads(line) for line in (ROOT / "demo" / "journal.jsonl").read_text().splitlines() if line.strip()]
     passes = [json.loads(p.read_text()) for p in sorted((ROOT / "demo" / "passes").glob("*.json"))]
-    return {"deployment": dep, "journal": journal, "passes": passes}
+    features_path = ROOT / "demo" / "features.json"
+    features = json.loads(features_path.read_text()) if features_path.exists() else {}
+    sealed = ROOT / "demo" / "sealed" / "index.json"
+    sealed_index = json.loads(sealed.read_text()) if sealed.exists() else []
+    receipts = [json.loads(p.read_text()) for p in sorted((ROOT / "demo" / "receipts").glob("*.json"))]
+    return {
+        "deployment": dep,
+        "journal": journal,
+        "passes": passes,
+        "features": features,
+        "sealed": sealed_index,
+        "receipts": receipts,
+    }
 
 
 def short(hexstr: str, head: int = 12, tail: int = 8) -> str:
@@ -159,7 +171,7 @@ def make_cover() -> Path:
         ("passes", "  ".join(f"{p['holder']['label']}" for p in passes)),
         ("transactions", str(len(run["journal"]))),
         ("refusals", "AlreadyCheckedIn · PassAlreadyRevoked\nHolderKeyMismatch · PassExists · BadIssuerSignature"),
-        ("tests", "28 Foundry tests"),
+        ("tests", "46 Foundry tests + 7 invariants · 100% branch"),
     ]
     yy = 690
     for label, value in rows:
@@ -288,7 +300,7 @@ def make_video() -> Path:
               bullets=[
                   f"deploy tx {short(dep['tx'], 22, 10)} at block {dep['block']}",
                   f"{len(journal)} transactions: hybrid-signed native txs, a scoped EVM window, {len(run['passes'])} passes.",
-                  "28 Foundry tests, with both precompiles etched as mocks.",
+                  "46 Foundry tests and 7 invariants (128,000 random calls) over 100% of branches.",
               ],
               mono=[("registry " + dep["registry"], ACCENT), ("admin    " + dep["admin"], TEXT)]),
     ]
@@ -321,6 +333,36 @@ def make_video() -> Path:
         reason = entry.get("revert", "refused")
         refusal_lines.append((f"{reason:<46} {short(entry['tx'], 10, 6)}", DANGER))
 
+    features = run["features"]
+    sealed = run["sealed"]
+    receipts = run["receipts"]
+    extra = []
+    if sealed:
+        batch = sealed[-1]
+        extra.append(Slide(11, "QoreSeal", "The issuance archive, sealed to a post-quantum key",
+              bullets=[
+                  f"{batch['entries']} pass documents in one {batch['envelope_len']}-byte envelope, encrypted to the issuer's ML-KEM-1024 key.",
+                  "Only a digest of the envelope goes on chain, in the memo of a hybrid-signed transaction.",
+                  "Anyone without the ML-KEM secret — a quantum computer included — gets an authentication failure, not the archive.",
+              ],
+              mono=[(batch["memo_commitment"], ACCENT)]))
+    if receipts:
+        extra.append(Slide(11, "QoreSign · SIWQ", "An admission receipt the venue cannot fake",
+              bullets=[
+                  f"{len(receipts)} check-in receipts, each a Sign In With QoreChain message: pass id, holder key hash, event, time, registry.",
+                  "Signed by the venue's hybrid key and verified against the ML-DSA-87 key its account registered on chain.",
+                  "An edited time, another pass id, or the same receipt a day later is refused.",
+              ],
+              mono=[("qorepass.venue · " + receipts[0]["nonce"], ACCENT_2)]))
+    if features.get("kiosk"):
+        extra.append(Slide(12, "Smart account", "A door scanner that can do exactly one thing",
+              bullets=[
+                  "The venue links an Ed25519 kiosk key with the evm permission and a rule naming one call: checkIn on this registry.",
+                  "The kiosk admitted dara-1 through MsgExecuteEVM; a relayer paid the fee and could not change what was authorised.",
+                  "The same key then tried to mint a pass — the chain refused: \"authenticator not permitted for this action\".",
+              ],
+              mono=[("allowed_evm_calls = [ " + (features["kiosk"]["allowed_evm_calls"][0][:34] + "…/0x1ef04ae6" ) + " ]", ACCENT)]))
+    scenarios += extra
     scenarios += [
         Slide(14, "Refusals", "The chain said no, in its own words",
               bullets=[
@@ -335,6 +377,14 @@ def make_video() -> Path:
               ],
               mono=[("issuePass → BadIssuerSignature()   pass count unchanged", DANGER)],
               accent=DANGER),
+        Slide(11, "Re-check it yourself", "No keys, no wallet, no trust in this page",
+              bullets=[
+                  "python verify.py — 27 read-only checks against the public testnet: bytecode, state, every journaled transaction, the refusals replayed now.",
+                  "QoreScan's CycloneDX CBOM maps the same code to DORA and NIS2; the registry's counters read back through qorechain-mcp.",
+                  "Every hash in docs/EVIDENCE.md was generated from the chain, not typed in.",
+              ],
+              mono=[("python verify.py            → 27/27", ACCENT),
+                    ("qorescan report --framework dora → docs/DORA-REPORT.md", ACCENT_2)]),
         Slide(9, "Done", "QorePass",
               bullets=[
                   "github.com/dorithesky/qorepass-verify · Apache-2.0",
