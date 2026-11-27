@@ -17,10 +17,50 @@ QoreChain's `pqcVerify` precompile against the key the *chain* holds for the
 issuer's account, so an attacker with the issuer's classical (ECDSA) key — the
 key a quantum computer would recover — still cannot mint a pass.
 
+> **Name note.** This is `dorithesky/qorepass-verify` — a post-quantum pass
+> registry with an on-chain ML-DSA-87 check-in. It is not the other project
+> called "QorePass" that appeared in this track on the same day, and not
+> "QoreGuard Quantum Pass" (that is a separate treasury agent from the same
+> builder). If you are looking for a pass that a *key* owns, you are in the right
+> repository: `QorePassRegistry` at `0x312845b8…a88b`.
+
 - **Live verifier:** <https://dorithesky.github.io/qorepass-verify/>
+- **QoreX dApp (create-qorechain-dapp + QoreX wallet):** <https://dorithesky.github.io/qorepass-verify/web/dapp/>
 - **Contract on testnet:** [`0x312845b8256cafe2ecc8be7addf54f83a836a88b`](https://explore.qore.network/address/0x312845b8256cafe2ecc8be7addf54f83a836a88b) (deploy tx [`0x834f7228…f231`](https://explore.qore.network/tx/0x834f722842fcaa41363de7b233b30c4e772f8ffc4752cf3e2170eb36f466f231), block 10810247)
 - **Every hash, generated from the chain:** [`docs/EVIDENCE.md`](docs/EVIDENCE.md)
 - **Demo video (≤3 min):** [`demo/qorepass-demo.mp4`](demo/qorepass-demo.mp4)
+
+## The QoreX dApp (`dapp/`)
+
+The verifier page above is a single static file. Next to it, `dapp/` is a real
+dApp built the way this track asks for:
+
+```bash
+npx create-qorechain-dapp dapp --template viem-wagmi --yes
+```
+
+That is the **viem-wagmi** starter from `create-qorechain-dapp@0.14.0` — Vite +
+React + wagmi + RainbowKit with `@qorechain/evm`'s chain definitions and
+**`@qorechain/qorex-rainbowkit`'s QoreX wallet** as the recommended connector.
+On top of the template, QorePass's screens read the registry directly:
+
+- **Look up a pass** by its `bytes32` id: `passInfo` and `passState` are read
+  from `QorePassRegistry` and turned into one word — valid, checked in, expired,
+  revoked — with the holder-key hash, the event id, the metadata commitment and
+  the timestamps. The three demo passes are one tap away.
+- **Your account**, once QoreX is connected: balance, the EVM authorisation
+  window (native-lane REST), and whether the account is a registered issuer
+  (`issuerInfo`: pass count, approval nonce, key hash).
+- **Scan receipt**: an EIP-191 signature over "pass X scanned by 0x… at time T",
+  a classical signature kept as a venue log — the dApp says plainly that it is
+  *not* the post-quantum check-in, which needs the holder's ML-DSA-87 signature
+  over `checkInMessage(passId, holderKeyHash)`.
+
+The build is committed under `web/dapp/` so the URL above works without a server
+(it needs no proxy: the registry reads go over the EVM JSON-RPC, which serves
+CORS). `dapp/` holds the source; `npm install && npm run build` reproduces
+`web/dapp/`. Kit: `create-qorechain-dapp`, `@qorechain/evm`,
+`@qorechain/qorex-rainbowkit`, wagmi/viem/RainbowKit.
 
 ## What the testnet already did
 
@@ -157,11 +197,12 @@ docs/cover.png        16:9 cover
 
 The on-chain side is QoreChain's Python SDK (`qorechain-sdk>=0.15.0`: hybrid
 native signatures, EVM windows, PQC key registration) and Foundry for Solidity.
-`create-qorechain-dapp`'s templates are Node.js projects; this machine has no
-Node toolchain, so the web app keeps the same shape those templates produce — a
-static page that talks to the testnet RPC and needs no build step — and declares
-its SDK dependency in `requirements.txt`. The AI workflow behind the build is
-documented in [`AI_USAGE.md`](AI_USAGE.md), including what it got wrong.
+The first pass shipped a single static verifier page because the machine had no
+Node toolchain; the second pass installed one (`node` v22) and scaffolded `dapp/`
+with the official starter, so the project now has both: the no-build verifier at
+the repo root and a `create-qorechain-dapp` viem-wagmi dApp with the QoreX wallet.
+The AI workflow behind the build is documented in [`AI_USAGE.md`](AI_USAGE.md),
+including what it got wrong.
 
 ## Licence
 

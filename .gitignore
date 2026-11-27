@@ -16,3 +16,8 @@ contracts/lib/
 # rendered working files
 tmp/
 *.log
+
+# the dApp's dependencies; the built output under web/dapp/ is committed instead
+dapp/node_modules/
+dapp/dist/
+dapp/.env.local

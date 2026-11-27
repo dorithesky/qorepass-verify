@@ -85,3 +85,27 @@ produced, what the human decided, and the mistakes the model made along the way.
 - Foundry (forge 1.x) for the contract and its tests.
 - `eth-abi` / `eth-account` for calldata and raw EVM transactions.
 - Pillow + imageio-ffmpeg for the cover and the video.
+
+## Second pass: the dApp the track asks for
+
+The first pass had no Node toolchain, so the project shipped a static verifier
+page and said so. The second pass fixed that: Node 22 was installed, and `dapp/`
+was scaffolded with `npx create-qorechain-dapp dapp --template viem-wagmi --yes`
+(v0.14.0) — the official starter with the QoreX wallet connector — and then
+rewritten around QorePass's registry reads (`passInfo`, `passState`,
+`issuerInfo`) with the QoreX connection reading the visitor's own account and a
+wallet-signed scan receipt. What went wrong on the way, kept because it is the
+honest part:
+
+- `npm install` was killed by the shell's per-command timeout three times. A
+  half-extracted `node_modules/esbuild` (a directory with no `package.json`)
+  then made every later `npm install` die with `Invalid Version:` from npm's
+  dedupe step. The fix was to remove the broken tree and install with
+  `--install-strategy=nested`, which does not hit that dedupe path.
+- `vite build` finished transforming 5,050 modules and then segfaulted while
+  rendering chunks. `NODE_OPTIONS=--max-old-space-size=3072` fixed it; the
+  default heap was the problem, not the code.
+
+The AI also wrote the name note at the top of the README, because another
+project called "QorePass" appeared in the same track on the same day and a judge
+should not have to guess which one this is.
