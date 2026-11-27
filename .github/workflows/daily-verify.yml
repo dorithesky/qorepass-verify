@@ -1,0 +1,68 @@
+# Re-check QorePass every day and on every push.
+#
+# Nothing here is a secret and nothing here signs: verify.py talks to the public
+# testnet (qorechain-diana) with read-only calls, and forge test runs against
+# the two precompiles etched as mocks. So the job is exactly the command a judge
+# runs on a clean machine — if the chain or this repository drifts, the badge
+# goes red the same day.
+name: daily-verify
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 00:10 UTC = 09:10 KST, after the day's first blocks
+    - cron: "10 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.10.0
+
+      - name: Build and test the contract
+        working-directory: contracts
+        run: |
+          if [ ! -d lib/forge-std ]; then forge install foundry-rs/forge-std --no-commit; fi
+          forge build --sizes
+          forge test -vv
+
+      - name: Enforce 100% coverage
+        working-directory: contracts
+        run: |
+          forge coverage --report summary --no-match-coverage "test|mocks" | tee coverage.txt
+          python3 ../scripts/check_coverage.py coverage.txt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the Python side
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Re-verify against the live testnet (read-only, no keys)
+        run: python verify.py
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-${{ github.run_id }}
+          path: contracts/coverage.txt
+          retention-days: 30
